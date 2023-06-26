@@ -73,26 +73,9 @@ def CalAllIndex(filelist,method="mean",pixelx=224, pixely=224, overlap_col=0, ov
 # dir_entropy = "Z:/memberdata/Wanghongmiao/20220905 MetImage Encoding/Trainingset final/train/1DEntropy/Total"
 # TopMean = 1000
 # TopEntropy = 1000
-
-def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="."):
-    """
-    Select information enriched tiles by top pooled intensity and 1D image entropy
-
-    :param dir_mean: pathway of calculated pooled intensity (.etp)
-    :param dir_entropy: pathway of calculated 1D image entropy (.etp)
-    :param TopMean: Top N pooled intensity selected.
-    :param TopEntropy: Top N entropy selected.
-    :param save_path: pathway of output data.
-    :return A list of index of selected tiles
-    """
-    skip_count_entropy = 0
-    total_count = 0
-    skip_count_topmean = 0
-
-    if TopMean is None and TopEntropy is None:
-        print("TopMean and TopEntropy can't all be None!")
-        return None
-
+def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000, save_path="."):
+    skipped_mean_files = []
+    skipped_entropy_files = []
 
     if TopEntropy is not None:
         rawList = glob.glob(dir_entropy + "/*.etp")
@@ -105,8 +88,9 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
                 if len(entropy_list) == len(entropy_list_all.index):
                     entropy_list_all.insert(entropy_list_all.shape[1], IndexList, entropy_list)
                 else:
-                    print(f"Skipping {IndexList} due to length mismatch in entropy.")
-                    skip_count_entropy += 1
+                    print(f"Skipping {IndexList} due to length mismatch in entropy. File size: {os.path.getsize(IndexList)} bytes")
+                    skipped_entropy_files.append(IndexList)
+        Entropy_Mean = entropy_list_all.mean(axis=1)
 
     if TopMean is not None:
         rawList = glob.glob(dir_mean + "/*.etp")
@@ -119,8 +103,9 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
                 if len(int_list) == len(int_list_all.index):
                     int_list_all.insert(int_list_all.shape[1], IndexList, int_list)
                 else:
-                    print(f"Skipping {IndexList} due to length mismatch in mean.")
-                    skip_count_topmean += 1
+                    print(f"Skipping {IndexList} due to length mismatch in mean. File size: {os.path.getsize(IndexList)} bytes")
+                    skipped_mean_files.append(IndexList)
+        Int_Mean = int_list_all.mean(axis=1)
 
     if TopMean is not None:
         TopMean = min(TopMean, len(Int_Mean))
@@ -140,10 +125,8 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
     with open(save_path + "/Samplinglist.lst", "wb") as f:
         pickle.dump(SamplingList, f)
 
-    print(f"Skipped {skip_count_entropy} files due to length mismatch.")
-    print(f"Total {len(rawList)} files processed.")
-    print(f"Skipped {skip_count_topmean} files due to length mismatch.")
-
+    print(f"Skipped {len(skipped_mean_files)} mean files due to length mismatch: {skipped_mean_files}")
+    print(f"Skipped {len(skipped_entropy_files)} entropy files due to length mismatch: {skipped_entropy_files}")
     return SamplingList
     
 def GenerateIndex(dataset_dir,cal_mean=True,cal_entropy = True,pixelx=224, pixely=224, overlap_col=0, overlap_row=0,save_path="."):
