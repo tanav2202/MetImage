@@ -106,7 +106,7 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
                 else:
                     print(f"Skipping {IndexList} due to length mismatch in entropy.")
                     skip_count_entropy += 1
-
+        Entropy_Mean = entropy_list_all.mean(axis=1)
     if TopMean is not None:
         rawList = glob.glob(dir_mean + "/*.etp")
         for IndexList in rawList:
@@ -120,7 +120,7 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
                 else:
                     print(f"Skipping {IndexList} due to length mismatch in mean.")
                     skip_count_topmean += 1
-
+        Int_Mean = int_list_all.mean(axis=1)
 
 
     if TopMean is None:
