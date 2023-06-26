@@ -104,5 +104,5 @@ def ConvertDataset(rawdata_dir,pattern="mzXML",mzmin=60, mzmax=1200, binSize=0.0
             wd = rawdata_dir + "/" + Group
             if not os.path.exists(wd):
                 os.makedirs(wd)
-            ConvertMetImage(wd, pattern=pattern, mzmin=mzmin, mzmax=mzmax, binSize=binSize,
+            ConvertMetImage(wd, mzmin=mzmin, mzmax=mzmax, binSize=binSize,
                             Threads=Threads, save_path=save_path+"/"+Group)
