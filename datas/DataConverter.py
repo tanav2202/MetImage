@@ -75,6 +75,7 @@ def ConvertMetImage(wd,pattern="mzXML", mzmin=60, mzmax=1200, binSize=0.01, Thre
         del reader
 
 def ConvertDataset(rawdata_dir,pattern="mzXML",mzmin=60, mzmax=1200, binSize=0.01, Threads=6, save_path = "."):
+    print(rawdata_dir)
     """
     Convert whole dataset into whole metabolome profiling images (.npz).
 
@@ -88,13 +89,15 @@ def ConvertDataset(rawdata_dir,pattern="mzXML",mzmin=60, mzmax=1200, binSize=0.0
         os.makedirs(save_path)
 
     Groups = os.listdir(rawdata_dir)
+    print(Groups)
     if Groups is None:
         ConvertMetImage(rawdata_dir, pattern=pattern, mzmin=mzmin, mzmax=mzmax, binSize=binSize,
-                        Threads=Threads, save_path=save_path+"/Group")
+                        Threads=Threads, save_path=save_path)
     else:
         for Group in Groups:
+            print(Group)
             wd = rawdata_dir + "/" + Group
             if not os.path.exists(wd):
                 os.makedirs(wd)
             ConvertMetImage(wd, pattern=pattern, mzmin=mzmin, mzmax=mzmax, binSize=binSize,
-                            Threads=Threads, save_path=save_path+"/Group")
+                            Threads=Threads, save_path=save_path+"/"+Group)
