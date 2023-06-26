@@ -73,7 +73,6 @@ def CalAllIndex(filelist,method="mean",pixelx=224, pixely=224, overlap_col=0, ov
 # dir_entropy = "Z:/memberdata/Wanghongmiao/20220905 MetImage Encoding/Trainingset final/train/1DEntropy/Total"
 # TopMean = 1000
 # TopEntropy = 1000
-
 def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="."):
     """
     Select information enriched tiles by top pooled intensity and 1D image entropy
@@ -85,9 +84,14 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
     :param save_path: pathway of output data.
     :return A list of index of selected tiles
     """
+    skip_count = 0
+    total_count = 0
+
     if TopMean is None and TopEntropy is None:
         print("TopMean and TopEntropy can't all be None!")
         return None
+
+
     if TopEntropy is not None:
         rawList = glob.glob(dir_entropy + "/*.etp")
         for IndexList in rawList:
@@ -96,8 +100,12 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
             if IndexList == rawList[0]:
                 entropy_list_all = pd.DataFrame(entropy_list, columns=[IndexList])
             else:
-                entropy_list_all.insert(entropy_list_all.shape[1], IndexList, entropy_list)
-        Entropy_Mean = entropy_list_all.mean(axis=1)
+                if len(entropy_list) == len(entropy_list_all.index):
+                    entropy_list_all.insert(entropy_list_all.shape[1], IndexList, entropy_list)
+                else:
+                    print(f"Skipping {IndexList} due to length mismatch.")
+                    skip_count += 1
+
 
     if TopMean is not None:
         rawList = glob.glob(dir_mean + "/*.etp")
@@ -123,6 +131,9 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
 
     with open(save_path + "/Samplinglist.lst", "wb") as f:
         pickle.dump(SamplingList, f)
+
+    print(f"Skipped {skip_count} files due to length mismatch.")
+    print(f"Total {len(rawList)} files processed.")
 
     return SamplingList
 
