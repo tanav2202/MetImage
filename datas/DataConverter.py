@@ -5,6 +5,7 @@ Convert raw MS data into MetImage
 import pandas as pd
 import numpy as np
 from pyteomics import mzxml
+from pyteomics import mzml
 import glob
 from scipy import sparse
 import os
