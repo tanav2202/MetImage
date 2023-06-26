@@ -84,8 +84,9 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
     :param save_path: pathway of output data.
     :return A list of index of selected tiles
     """
-    skip_count = 0
+    skip_count_entropy = 0
     total_count = 0
+    skip_count_topmean = 0
 
     if TopMean is None and TopEntropy is None:
         print("TopMean and TopEntropy can't all be None!")
@@ -103,9 +104,8 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
                 if len(entropy_list) == len(entropy_list_all.index):
                     entropy_list_all.insert(entropy_list_all.shape[1], IndexList, entropy_list)
                 else:
-                    print(f"Skipping {IndexList} due to length mismatch.")
-                    skip_count += 1
-
+                    print(f"Skipping {IndexList} due to length mismatch in entropy.")
+                    skip_count_entropy += 1
 
     if TopMean is not None:
         rawList = glob.glob(dir_mean + "/*.etp")
@@ -115,9 +115,12 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
             if IndexList == rawList[0]:
                 int_list_all = pd.DataFrame(int_list, columns=[IndexList])
             else:
-                int_list_all.insert(int_list_all.shape[1], IndexList, int_list)
+                if len(int_list) == len(int_list_all.index):
+                    int_list_all.insert(int_list_all.shape[1], IndexList, int_list)
+                else:
+                    print(f"Skipping {IndexList} due to length mismatch in mean.")
+                    skip_count_topmean += 1
 
-        Int_Mean = int_list_all.mean(axis=1)
 
 
     if TopMean is None:
@@ -132,8 +135,9 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
     with open(save_path + "/Samplinglist.lst", "wb") as f:
         pickle.dump(SamplingList, f)
 
-    print(f"Skipped {skip_count} files due to length mismatch.")
+    print(f"Skipped {skip_count_entropy} files due to length mismatch.")
     print(f"Total {len(rawList)} files processed.")
+    print(f"Skipped {skip_count_topmean} files due to length mismatch.")
 
     return SamplingList
 
