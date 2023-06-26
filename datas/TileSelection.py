@@ -73,6 +73,7 @@ def CalAllIndex(filelist,method="mean",pixelx=224, pixely=224, overlap_col=0, ov
 # dir_entropy = "Z:/memberdata/Wanghongmiao/20220905 MetImage Encoding/Trainingset final/train/1DEntropy/Total"
 # TopMean = 1000
 # TopEntropy = 1000
+
 def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="."):
     """
     Select information enriched tiles by top pooled intensity and 1D image entropy
@@ -106,7 +107,7 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
                 else:
                     print(f"Skipping {IndexList} due to length mismatch in entropy.")
                     skip_count_entropy += 1
-        Entropy_Mean = entropy_list_all.mean(axis=1)
+
     if TopMean is not None:
         rawList = glob.glob(dir_mean + "/*.etp")
         for IndexList in rawList:
@@ -120,8 +121,12 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
                 else:
                     print(f"Skipping {IndexList} due to length mismatch in mean.")
                     skip_count_topmean += 1
-        Int_Mean = int_list_all.mean(axis=1)
 
+    if TopMean is not None:
+        TopMean = min(TopMean, len(Int_Mean))
+
+    if TopEntropy is not None:
+        TopEntropy = min(TopEntropy, len(Entropy_Mean))
 
     if TopMean is None:
         SamplingList = Entropy_Mean.sort_values(ascending=False).index[range(TopEntropy)]
@@ -140,7 +145,7 @@ def SelectTiles(dir_mean, dir_entropy, TopMean=1000, TopEntropy=1000,save_path="
     print(f"Skipped {skip_count_topmean} files due to length mismatch.")
 
     return SamplingList
-
+    
 def GenerateIndex(dataset_dir,cal_mean=True,cal_entropy = True,pixelx=224, pixely=224, overlap_col=0, overlap_row=0,save_path="."):
     """
     Generate pooled intensity and 1D image entropy of dataset.
