@@ -12,9 +12,10 @@ from multiprocessing.dummy import Pool as ThreadPool
 from functools import partial
 from tqdm import tqdm
 
-def binningMZ(mzList, intList, mzmin=60, mzmax=1200, binSize=0.01):
+
+def binningMZ(mzList, intList, mzmin=100, mzmax=1000, binSize=0.01):
     """
-    Binning m/z from .mzxml
+    Binning m/z from .mzml
 
     :param mzList: a list of m/z value
     :param intList: a list of intensity (same length as mzlist)
@@ -33,46 +34,50 @@ def binningMZ(mzList, intList, mzmin=60, mzmax=1200, binSize=0.01):
     BinTable = BinTable.fillna(value=0)
     return BinTable.iloc[:, 0]
 
-def ParseSpec(spec, mzmin=60, mzmax=1200, binSize=0.01):
+
+def ParseSpec(spec, mzmin=100, mzmax=1000, binSize=0.01):
     """
     Convert the spec data into MetImage matrix
 
-    :param spec: spec data generate from
+    :param spec: spec data generated from
     :return: MetImage matrix
     """
-    scan = spec['num']
+    scan = spec['id']
     mzList = spec['m/z array']
     intList = spec['intensity array']
     BinTable = binningMZ(mzList, intList, mzmin=mzmin, mzmax=mzmax, binSize=binSize)
     BinTable.columns = [scan]
     return BinTable
 
-def ConvertMetImage(wd,pattern="mzXML", mzmin=60, mzmax=1200, binSize=0.01, Threads=6,save_path="."):
-    """
-    Generate MetImage from raw MS data(.mzxml)
 
-    :param wd: pathway of input data. (custom)
-    :param pattern: MS data format. (custom, default mzXML)
-    :param Threads: Threads used for multiprocessing. (custom)
-    :param save_path: pathway of output data. (custom)
-    :return: MetImage, whole metabolome profiling image (.npz)
+def ConvertMetImage(file_path, mzmin=100, mzmax=1000, binSize=0.01, Threads=6, save_path="."):
     """
-    targetPattern = wd +"/*."+pattern
-    rawList = glob.glob(targetPattern)
-    for file in tqdm(rawList):
-        reader = mzxml.read(file)
-        filename = os.path.splitext(os.path.basename(file))[0]
-        # print(filename)
-        pool = ThreadPool(Threads)
-        ParseSpec_partial = partial(ParseSpec,mzmin=mzmin, mzmax=mzmax, binSize=binSize)
-        MetImage = pool.map(ParseSpec_partial, list(reader))
-        MetImage = np.array(MetImage).T
-        pool.close()
-        pool.join()
-        SparseTable = sparse.csr_matrix(MetImage, dtype=np.float32)
-        sparse.save_npz(save_path+"/"+filename+".npz", SparseTable)
-        del MetImage
-        del reader
+    Generate MetImage from a raw MS data (.mzml) file
+
+    :param file_path: pathway of the input file
+    :param mzmin: the minimum value of m/z bin (custom)
+    :param mzmax: the maximum value of m/z bin (custom)
+    :param binSize: the Da of every bin in m/z binning (custom)
+    :param Threads: Threads used for multiprocessing (custom)
+    :param save_path: pathway of output data (custom)
+    :return: MetImage, the whole metabolome profiling image (.npz)
+    """
+    reader = mzml.read(file_path)
+    filename = os.path.splitext(os.path.basename(file_path))[0]
+
+    pool = ThreadPool(Threads)
+    ParseSpec_partial = partial(ParseSpec, mzmin=mzmin, mzmax=mzmax, binSize=binSize)
+    MetImage = pool.map(ParseSpec_partial, list(reader))
+    MetImage = np.array(MetImage).T
+    pool.close()
+    pool.join()
+
+    SparseTable = sparse.csr_matrix(MetImage, dtype=np.float32)
+    sparse.save_npz(os.path.join(save_path, filename + ".npz"), SparseTable)
+
+    del MetImage
+    del reader
+
 
 def ConvertDataset(rawdata_dir,pattern="mzXML",mzmin=60, mzmax=1200, binSize=0.01, Threads=6, save_path = "."):
     print(rawdata_dir)
